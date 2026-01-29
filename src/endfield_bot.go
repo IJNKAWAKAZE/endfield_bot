@@ -32,13 +32,6 @@ func main() {
 	bot.Serve()
 }
 
-type signHeaders struct {
-	Platform  string `json:"platform"`
-	Timestamp string `json:"timestamp"`
-	DId       string `json:"dId"`
-	VName     string `json:"vName"`
-}
-
 // 设置日志格式
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)

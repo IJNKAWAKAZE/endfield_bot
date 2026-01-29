@@ -8,7 +8,6 @@ import (
 	"github.com/starudream/go-lib/core/v2/codec/json"
 	"github.com/starudream/go-lib/core/v2/utils/structutil"
 	"github.com/starudream/go-lib/resty/v2"
-	"log"
 	"net/url"
 	"strconv"
 	"time"
@@ -52,9 +51,6 @@ func sign(headers signHeaders, method, path, token string, query url.Values, bod
 	s1 := hex.EncodeToString(b1)
 	b2 := md5.Sum([]byte(s1))
 	s2 := hex.EncodeToString(b2[:])
-	log.Println(token)
-	log.Println(content)
-	log.Println(s2)
 	return content, s2
 }
 
