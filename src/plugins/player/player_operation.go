@@ -5,7 +5,9 @@ import (
 )
 
 var (
-	playerOperationMap = map[string]commandoperation.OperationI{}
+	playerOperationMap = map[string]commandoperation.OperationI{
+		"state": PlayerOperationState{},
+	}
 )
 
 func initFactory() {

@@ -80,3 +80,41 @@ func SkportRequest[T any](r *resty.Request, method, path string, vs ...any) (t T
 	}
 	return res.Data, nil
 }
+
+func SklandRequestPlayerData(r *resty.Request, method, path string, vs ...any) (d string, _ error) {
+	for i := 0; i < len(vs); i++ {
+		switch v := vs[i].(type) {
+		case AccountSkland:
+			addSign(r, method, path, v)
+		}
+	}
+
+	res, err := r.Execute(method, sklandAddr+path)
+	if err != nil {
+		return d, fmt.Errorf("[skland] %w", err)
+	}
+	if res.StatusCode() == 405 {
+		log.Println(string(res.Body()))
+		return d, fmt.Errorf("服务器被墙了！")
+	}
+	return string(res.Body()), nil
+}
+
+func SkportRequestPlayerData(r *resty.Request, method, path string, vs ...any) (d string, _ error) {
+	for i := 0; i < len(vs); i++ {
+		switch v := vs[i].(type) {
+		case AccountSkland:
+			addSign(r, method, path, v)
+		}
+	}
+
+	res, err := r.Execute(method, skportAddr+path)
+	if err != nil {
+		return d, fmt.Errorf("[skport] %w", err)
+	}
+	if res.StatusCode() == 405 {
+		log.Println(string(res.Body()))
+		return d, fmt.Errorf("服务器被墙了！")
+	}
+	return string(res.Body()), nil
+}

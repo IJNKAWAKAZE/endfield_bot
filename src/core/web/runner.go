@@ -10,6 +10,7 @@ func Start() {
 	r := gin.Default()
 	r.Static("/assets", "./assets")
 	Help(r)
+	State(r)
 	Lottery(r)
 	port := viper.GetString("http.port")
 	err := r.Run(":" + port)

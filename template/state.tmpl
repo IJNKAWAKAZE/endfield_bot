@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <title>实时状态</title>
+    <style>
+        @font-face {
+            font-family: 'NotoSansHans';
+            src: url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'NotoSansHans', "Microsoft YaHei", sans-serif;
+        }
+
+        #main {
+            width: 800px;
+            height: 400px;
+            background-image: url("/assets/state/bg.png");
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* 增加左侧遮罩，防止背景过亮导致卡片不明显 */
+        #main::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.15), rgba(0,0,0,0));
+            z-index: 1;
+        }
+
+        /* 左侧内容区 */
+        .left-content {
+            width: 50%;
+            height: 100%;
+            padding: 25px 40px; /* 减小上下内边距 */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+        }
+
+        /* 玩家信息区域 */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px; /* 减小间距 */
+        }
+
+        .user-avatar {
+            width: 55px; /* 减小头像尺寸 */
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 4px 10px rgba(0,0,0,0.2);
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #333;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+            letter-spacing: 1px;
+        }
+
+        .user-server {
+            font-size: 14px;
+            color: #666;
+            background: rgba(255,255,255,0.4);
+            padding: 2px 8px;
+            border-radius: 10px;
+            width: fit-content;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        /* 移除之前的 header-logos 样式 */
+        .header-logos {
+            display: none;
+        }
+
+        /* 增强卡片对比度：增加边框、深色阴影和更强的毛玻璃 */
+        .state-card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(15px) saturate(120%);
+            -webkit-backdrop-filter: blur(15px) saturate(120%);
+            border-radius: 18px;
+            padding: 10px 18px; /* 压缩内边距 */
+            margin-bottom: 12px; /* 压缩卡片间距 */
+            display: flex;
+            align-items: center;
+            /* 黑色投影增强边界感 */
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.08),
+                inset 1px 1px 0 rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 310px; /* 略微收窄 */
+        }
+
+        .state-icon {
+            width: 48px; /* 减小图标尺寸 */
+            height: 48px;
+            margin-right: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .state-icon img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .state-info {
+            flex-grow: 1;
+            text-align: right;
+        }
+
+        .state-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .state-total {
+            font-size: 18px;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .state-desc {
+            font-size: 14px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* 右侧背景和人物 */
+        .right-bg {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 70%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .color-block {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 58%;
+            height: 100%;
+            background-color: #f7ff00;
+            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+        }
+
+        /* 背景网格点阵，填充空白 */
+        .color-block::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background-image: radial-gradient(rgba(0,0,0,0.06) 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 填充右侧空白：大幅装饰性背景文字 */
+        .color-block::after {
+            content: "SKLAND";
+            position: absolute;
+            right: 15%;
+            top: 45%;
+            transform: rotate(-90deg) translate(0, -50%);
+            font-size: 130px;
+            font-weight: 950;
+            color: rgba(0,0,0,0.04);
+            letter-spacing: 5px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* 增加一个额外的半透明辅助色块，增加层次 */
+        .extra-deco {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 40%;
+            height: 30%;
+            background: linear-gradient(135deg, transparent, rgba(0,0,0,0.03));
+            clip-path: polygon(100% 0, 100% 100%, 0% 100%);
+            z-index: 0;
+        }
+
+        /* 辅助性装饰线条 */
+        .decoration-lines {
+            position: absolute;
+            right: 10%;
+            top: 10%;
+            width: 300px;
+            height: 400px;
+            border-right: 1.5px solid rgba(0,0,0,0.03);
+            border-top: 1.5px solid rgba(0,0,0,0.03);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .split-line {
+            position: absolute;
+            left: -2px;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #ff00ff, #00ffff);
+            z-index: 3;
+        }
+
+        .character-img {
+            position: absolute;
+            right: -20px;
+            bottom: -10px;
+            max-height: 115%;
+            z-index: 4;
+            filter: drop-shadow(-10px 5px 20px rgba(0,0,0,0.15));
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <!-- 背景装饰 -->
+        <div class="decoration-lines"></div>
+        <div class="extra-deco"></div>
+
+        <!-- 左侧内容 -->
+        <div class="left-content">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <img src="{{.Data.Detail.Base.AvatarURL}}">
+                </div>
+                <div class="user-detail">
+                    <span class="user-name">{{.Data.Detail.Base.Name}}</span>
+                </div>
+            </div>
+
+            <div class="state-list">
+                <!-- 理智/体力 -->
+                <div class="state-card">
+                    <div class="state-icon">
+                        <img src="/assets/state/icon_ap.png">
+                    </div>
+                    <div class="state-info">
+                        <div class="state-value">{{.Data.Detail.Dungeon.CurStamina}}<span class="state-total"> / {{.Data.Detail.Dungeon.MaxStamina}}</span></div>
+                        <div class="state-desc" id="ap-recovery-time">
+                            <script>
+                                (function() {
+                                    const cur = parseInt("{{.Data.Detail.Dungeon.CurStamina}}");
+                                    const max = parseInt("{{.Data.Detail.Dungeon.MaxStamina}}");
+                                    const targetTs = parseInt("{{.Data.Detail.Dungeon.MaxTs}}") * 1000;
+                                    const currentTs = Date.now();
+                                    
+                                    const el = document.currentScript.parentElement;
+                                    if (cur >= max || targetTs <= currentTs) {
+                                        el.innerText = "理智已满";
+                                    } else {
+                                        const diff = Math.floor((targetTs - currentTs) / 1000);
+                                        const h = Math.floor(diff / 3600);
+                                        const m = Math.floor((diff % 3600) / 60);
+                                        el.innerText = `${h}小时${m}分钟`;
+                                    }
+                                })();
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 活跃度 -->
+                <div class="state-card">
+                    <div class="state-icon">
+                        <img src="/assets/state/icon_activity.png">
+                    </div>
+                    <div class="state-info">
+                        <div class="state-value">{{.Data.Detail.DailyMission.DailyActivation}}<span class="state-total"> / {{.Data.Detail.DailyMission.MaxDailyActivation}}</span></div>
+                        <div class="state-desc">{{if eq .Data.Detail.DailyMission.DailyActivation .Data.Detail.DailyMission.MaxDailyActivation}}活跃度已满{{else}}活跃度进行中{{end}}</div>
+                    </div>
+                </div>
+
+                <!-- 通行证 -->
+                <div class="state-card">
+                    <div class="state-icon">
+                        <img src="/assets/state/icon_bp.png">
+                    </div>
+                    <div class="state-info">
+                        <div class="state-value">{{.Data.Detail.BpSystem.CurLevel}}<span class="state-total"> / {{.Data.Detail.BpSystem.MaxLevel}}</span></div>
+                        <div class="state-desc">通行证等级</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧视觉 -->
+        <div class="right-bg">
+            <div class="color-block">
+                <div class="split-line"></div>
+            </div>
+            <img src="/assets/state/default_char.png" class="character-img">
+        </div>
+    </div>
+</body>
+</html>

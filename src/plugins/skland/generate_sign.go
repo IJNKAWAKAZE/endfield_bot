@@ -10,6 +10,7 @@ import (
 	"github.com/starudream/go-lib/resty/v2"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func tom(s any) map[string]string {
 
 func sign(headers signHeaders, method, path, token string, query url.Values, body any) (string, string) {
 	str := query.Encode()
+	path = strings.ReplaceAll(path, "?", "")
 	if method != "GET" {
 		str = json.MustMarshalString(body)
 	}
