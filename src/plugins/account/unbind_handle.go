@@ -1,0 +1,34 @@
+package account
+
+import (
+	bot "endfield_bot/config"
+	"endfield_bot/utils"
+	"fmt"
+	tgbotapi "github.com/ijnkawakaze/telegram-bot-api"
+)
+
+// UnbindHandle 解绑角色
+func UnbindHandle(update tgbotapi.Update) error {
+	chatId := update.Message.Chat.ID
+	userId := update.Message.From.ID
+	var players []UserPlayer
+	res := utils.GetPlayersByUserId(userId).Scan(&players)
+	if res.RowsAffected == 0 {
+		sendMessage := tgbotapi.NewMessage(chatId, "您还未绑定任何角色！")
+		bot.Endfield.Send(sendMessage)
+		return nil
+	}
+	var buttons [][]tgbotapi.InlineKeyboardButton
+	for _, player := range players {
+		buttons = append(buttons, tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s(%s)", player.PlayerName, player.ServerName), fmt.Sprintf("%s,%s", "unbind", player.Uid)),
+		))
+	}
+	inlineKeyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		buttons...,
+	)
+	sendMessage := tgbotapi.NewMessage(chatId, "请选择要解绑的角色")
+	sendMessage.ReplyMarkup = inlineKeyboardMarkup
+	bot.Endfield.Send(sendMessage)
+	return nil
+}

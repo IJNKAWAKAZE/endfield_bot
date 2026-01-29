@@ -1,0 +1,148 @@
+<html>
+<head>
+    <title>帮助</title>
+    <style>
+        @font-face{
+            font-family: 'NotoSansHans';
+            src : url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+        body {
+            margin: 0;
+            font-family: 'NotoSansHans',serif;
+        }
+        #main {
+            position: absolute;
+            width: 660px;
+            background-image: url("/assets/help/bg.jpg");
+            background-size: cover;
+        }
+        .banner img {
+            width: 100%;
+            margin-top: 10px;
+            float: left;
+        }
+        .banner h1 {
+            float: left;
+            margin-top: -110px;
+            margin-left: 20px;
+            color: white;
+        }
+        .banner p {
+            float: left;
+            margin-left: 20px;
+            margin-top: -45px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        .label {
+            width: 100%;
+            float: left;
+            margin-top: 10px;
+        }
+        .label img {
+            height: 40px;
+            width: 100%;
+            float: left;
+        }
+        .cmdType {
+            float: left;
+            color: white;
+            margin-top: -32px;
+            margin-left: 25px;
+        }
+        .cmd {
+            width: 150px;
+            float: left;
+            margin-top: 15px;
+            margin-left: 10px;
+            border: solid 1px;
+            font-size: 15px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+        }
+        .cmd p {
+            margin-bottom: 0;
+            margin-top: 3px;
+            margin-left: 5px;
+        }
+        .cmd svg {
+            float: right;
+            margin-top: 3px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="main">
+    <div class="banner">
+        <img src="/assets/help/banner.png"/>
+        <h1>使用说明</h1>
+        <p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+            <span>为需要绑定角色的指令</span>
+        </p>
+    </div>
+    <div class="bg">
+        <div class="label">
+            <img src="/assets/help/label.png"/>
+            <span class="cmdType">私聊指令</span>
+        </div>
+        {{range .PrivateCmds}}
+        <div class="cmd">
+            <p>
+                {{.Cmd}} {{.Param}}
+                {{if .IsBind}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                </svg>
+                {{end}}
+            </p>
+            <p>{{.Desc}}</p>
+        </div>
+        {{end}}
+        <div class="label">
+            <img src="/assets/help/label.png"/>
+            <span class="cmdType">普通指令</span>
+        </div>
+        {{range .PublicCmds}}
+        <div class="cmd">
+            <p>
+                {{.Cmd}} {{.Param}}
+                {{if .IsBind}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                </svg>
+                {{end}}
+            </p>
+            <p>{{.Desc}}</p>
+        </div>
+        {{end}}
+        <div class="label">
+            <img src="/assets/help/label.png"/>
+            <span class="cmdType">管理员指令</span>
+        </div>
+        {{range .AdminCmds}}
+        <div class="cmd">
+            <p>
+                {{.Cmd}} {{.Param}}
+                {{if .IsBind}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                </svg>
+                {{end}}
+            </p>
+            <p>{{.Desc}}</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+</body>
+</html>

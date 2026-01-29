@@ -1,0 +1,53 @@
+package web
+
+import (
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
+
+type HelpCmd struct {
+	PrivateCmds []Cmd
+	PublicCmds  []Cmd
+	AdminCmds   []Cmd
+}
+
+type Cmd struct {
+	Cmd    string
+	Desc   string
+	Param  string
+	IsBind bool
+}
+
+func Help(r *gin.Engine) {
+	r.GET("/help", func(c *gin.Context) {
+		r.LoadHTMLFiles("./template/Help.tmpl")
+		var helpCmd HelpCmd
+		var privateCmds []Cmd
+		var publicCmds []Cmd
+		var adminCmds []Cmd
+
+		// 私聊指令
+		privateCmds = append(privateCmds, Cmd{Cmd: "/bind", Desc: "绑定角色", Param: "", IsBind: false})
+		privateCmds = append(privateCmds, Cmd{Cmd: "/unbind", Desc: "解绑角色", Param: "", IsBind: true})
+		privateCmds = append(privateCmds, Cmd{Cmd: "/cancel", Desc: "取消操作", Param: "", IsBind: false})
+		privateCmds = append(privateCmds, Cmd{Cmd: "/reset_token", Desc: "重设token", Param: "", IsBind: true})
+		// 普通指令
+		publicCmds = append(publicCmds, Cmd{Cmd: "/help", Desc: "使用说明", Param: "", IsBind: false})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/ping", Desc: "存活测试", Param: "", IsBind: false})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/sign", Desc: "签到", Param: "", IsBind: true})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/sign", Desc: "开启自动签到", Param: "auto", IsBind: true})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/sign", Desc: "关闭自动签到", Param: "stop", IsBind: true})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/report", Desc: "举报", Param: "", IsBind: false})
+
+		// 管理员指令
+		adminCmds = append(adminCmds, Cmd{Cmd: "/news", Desc: "开启/关闭动态推送", Param: "", IsBind: false})
+		adminCmds = append(adminCmds, Cmd{Cmd: "/request_mode", Desc: "切换群验证模式", Param: "", IsBind: false})
+		adminCmds = append(adminCmds, Cmd{Cmd: "/reg", Desc: "回复消息设置为群规", Param: "", IsBind: false})
+		adminCmds = append(adminCmds, Cmd{Cmd: "/welcome", Desc: "设置入群欢迎信息", Param: "文本", IsBind: false})
+
+		helpCmd.PrivateCmds = privateCmds
+		helpCmd.PublicCmds = publicCmds
+		helpCmd.AdminCmds = adminCmds
+		c.HTML(http.StatusOK, "Help.tmpl", helpCmd)
+	})
+}

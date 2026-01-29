@@ -1,0 +1,36 @@
+bot:
+  # 机器人userName
+  name:
+  # 机器人token
+  token:
+  # 拥有者userId
+  owner:
+  # 消息删除延迟
+  msg_del_delay: 10
+  # debug模式
+  debug: false
+
+sticker:
+  ping: CAACAgUAAyEFAAToaZW0AAMPaXmil9ZcqJgYnYZ_R0uxC4WE4qMAAvEZAALLPqFWOGfl_L9k5QABOAQ
+
+api:
+  user_agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Mobile Safari/537.36 EdgA/118.0.2088.66
+  skport: https://zonai.skport.com
+  bilibili_buvid: https://api.bilibili.com/x/frontend/finger/spi
+  bilibili_register_buvid: https://api.bilibili.com/x/internal/gaia-gateway/ExClimbWuzhi
+  bilibili_dynamic: https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=1265652806&timezone_offset=-480&features=itemOpusStyle,listOnly
+
+mysql:
+  dsn: root:root@tcp(localhost:3306)/endfield?charset=utf8mb4&parseTime=True&loc=Local
+
+redis:
+  addr: localhost:6379
+  pwd: 123456
+  db: 0
+  pool_size: 20
+
+http:
+  port: 24444
+
+# 过滤bio关键词
+ad: []
