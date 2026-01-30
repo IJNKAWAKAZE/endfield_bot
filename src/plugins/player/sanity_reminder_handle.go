@@ -36,7 +36,7 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 		var reminder UserSanityReminder
 		res := utils.GetSanityReminderByUserId(userId).Scan(&reminder)
 		if res.RowsAffected > 0 {
-			sendMessage := tgbotapi.NewMessage(chatId, "您已经开启了理智回满提醒！")
+			sendMessage := tgbotapi.NewMessage(chatId, "您已经开启了理智提醒！")
 			sendMessage.ReplyToMessageID = messageId
 			bot.Endfield.Send(sendMessage)
 			return nil
@@ -49,12 +49,12 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 			IsReminded: false,
 		}
 		bot.DBEngine.Table("user_sanity_reminder").Create(&reminder)
-		sendMessage := tgbotapi.NewMessage(chatId, "开启理智回满提醒成功！每 10 分钟将检查一次理智情况。")
+		sendMessage := tgbotapi.NewMessage(chatId, "开启理智提醒成功！每 10 分钟将检查一次理智情况。")
 		sendMessage.ReplyToMessageID = messageId
 		bot.Endfield.Send(sendMessage)
 	} else if param == "off" {
 		bot.DBEngine.Exec("delete from user_sanity_reminder where user_number = ?", userId)
-		sendMessage := tgbotapi.NewMessage(chatId, "已关闭理智回满提醒！")
+		sendMessage := tgbotapi.NewMessage(chatId, "已关闭理智提醒！")
 		sendMessage.ReplyToMessageID = messageId
 		bot.Endfield.Send(sendMessage)
 	} else {
@@ -111,9 +111,13 @@ func checkUserSanity(reminder UserSanityReminder) {
 				curStamina, _ := strconv.Atoi(playerData.Data.Detail.Dungeon.CurStamina)
 				maxStamina, _ := strconv.Atoi(playerData.Data.Detail.Dungeon.MaxStamina)
 
-				// 如果理智已满且之前未提醒
-				if (maxTs <= time.Now().Unix() || curStamina >= maxStamina) && !reminder.IsReminded {
-					msg := fmt.Sprintf("⚠️ 理智回满提醒 ⚠️\n\n角色: %s\n当前理智: %d / %d\n您的理智已经回满，请及时上号处理！", player.PlayerName, curStamina, maxStamina)
+				// 如果理智达到 80% 及以上且之前未提醒
+				if (curStamina >= int(float64(maxStamina)*0.8) || (maxTs != 0 && time.Now().Unix() >= maxTs-int64(float64(maxStamina)*0.2*360))) && !reminder.IsReminded {
+					recoveryTime := "已回满"
+					if maxTs > time.Now().Unix() {
+						recoveryTime = time.Unix(maxTs, 0).Format("2006-01-02 15:04:05")
+					}
+					msg := fmt.Sprintf("⚠️ 理智提醒 ⚠️\n\n角色: %s\n当前理智: %d / %d\n您的理智已达到 80%% 以上，请及时处理！\n预计回满时间: %s", player.PlayerName, curStamina, maxStamina, recoveryTime)
 					sendMessage := tgbotapi.NewMessage(reminder.UserNumber, msg)
 					bot.Endfield.Send(sendMessage)
 
@@ -121,8 +125,8 @@ func checkUserSanity(reminder UserSanityReminder) {
 					bot.DBEngine.Table("user_sanity_reminder").Where("user_number = ?", reminder.UserNumber).Update("is_reminded", true)
 				}
 
-				// 如果理智没有回满，且之前是已提醒状态，则重置提醒状态（用户已经消耗过理智了）
-				if curStamina < maxStamina && reminder.IsReminded {
+				// 如果理智低于 80%，且之前是已提醒状态，则重置提醒状态（用户已经消耗过理智了）
+				if curStamina < int(float64(maxStamina)*0.8) && reminder.IsReminded {
 					bot.DBEngine.Table("user_sanity_reminder").Where("user_number = ?", reminder.UserNumber).Update("is_reminded", false)
 				}
 			}
