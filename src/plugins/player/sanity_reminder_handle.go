@@ -34,7 +34,7 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 
 	if param == "on" {
 		var reminder UserSanityReminder
-		res := utils.GetStaminaReminderByUserId(userId).Scan(&reminder)
+		res := utils.GetSanityReminderByUserId(userId).Scan(&reminder)
 		if res.RowsAffected > 0 {
 			sendMessage := tgbotapi.NewMessage(chatId, "您已经开启了理智回满提醒！")
 			sendMessage.ReplyToMessageID = messageId
@@ -53,12 +53,12 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 		sendMessage.ReplyToMessageID = messageId
 		bot.Endfield.Send(sendMessage)
 	} else if param == "off" {
-		bot.DBEngine.Exec("delete from user_stamina_reminder where user_number = ?", userId)
+		bot.DBEngine.Exec("delete from user_sanity_reminder where user_number = ?", userId)
 		sendMessage := tgbotapi.NewMessage(chatId, "已关闭理智回满提醒！")
 		sendMessage.ReplyToMessageID = messageId
 		bot.Endfield.Send(sendMessage)
 	} else {
-		sendMessage := tgbotapi.NewMessage(chatId, "理智提醒指令说明：\n开启：`/stamina on`\n关闭：`/stamina off`")
+		sendMessage := tgbotapi.NewMessage(chatId, "理智提醒指令说明：\n开启：`/sanity on`\n关闭：`/sanity off`")
 		sendMessage.ParseMode = tgbotapi.ModeMarkdownV2
 		sendMessage.ReplyToMessageID = messageId
 		bot.Endfield.Send(sendMessage)
@@ -69,7 +69,7 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 // CheckSanity 检查所有用户的理智是否回满
 func CheckSanity() {
 	var reminders []UserSanityReminder
-	res := utils.GetStaminaReminders().Scan(&reminders)
+	res := utils.GetSanityReminders().Scan(&reminders)
 	if res.RowsAffected > 0 {
 		go func() {
 			log.Printf("开始检查 %d 位用户的理智回复情况...", len(reminders))
@@ -79,14 +79,14 @@ func CheckSanity() {
 				r, _ := rand.Int(rand.Reader, big.NewInt(300))
 				random, _ := strconv.Atoi(r.String())
 				time.Sleep(time.Second * time.Duration(random))
-				checkUserStamina(reminder)
+				checkUserSanity(reminder)
 			}
 			log.Println("理智检查执行完毕")
 		}()
 	}
 }
 
-func checkUserStamina(reminder UserSanityReminder) {
+func checkUserSanity(reminder UserSanityReminder) {
 	var players []account.UserPlayer
 	res := utils.GetPlayersByUserId(reminder.UserNumber).Scan(&players)
 	if res.RowsAffected > 0 {
