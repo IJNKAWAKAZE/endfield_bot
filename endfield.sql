@@ -109,6 +109,21 @@ CREATE TABLE `user_player`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户绑定角色信息' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for user_sanity_reminder
+-- ----------------------------
+DROP TABLE IF EXISTS `user_sanity_reminder`;
+CREATE TABLE `user_sanity_reminder`  (
+  `id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `user_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户名称',
+  `user_number` bigint NULL DEFAULT NULL COMMENT '用户ID',
+  `is_reminded` tinyint(1) NULL DEFAULT 0 COMMENT '是否已发送提醒(0:未提醒, 1:已提醒)',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `create_time` timestamp(0) NULL DEFAULT NULL,
+  `update_time` timestamp(0) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '理智提醒用户' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for user_sign
 -- ----------------------------
 DROP TABLE IF EXISTS `user_sign`;
