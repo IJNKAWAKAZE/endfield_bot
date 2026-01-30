@@ -47,6 +47,7 @@ func Serve() {
 	b.NewCommandProcessor("help", system.HelpHandle)
 	b.NewCommandProcessor("ping", system.PingHandle)
 	b.NewCommandProcessor("sign", sign.SignHandle)
+	b.NewCommandProcessor("sanity", player.SanityReminderHandle)
 	b.NewCommandProcessor("state", player.PlayerHandle)
 	b.NewCommandProcessor("report", system.ReportHandle)
 	b.NewCommandProcessor("join_lottery", lottery.JoinLotteryHandle)

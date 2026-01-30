@@ -22,6 +22,6 @@ func DB() error {
 	}
 	engine.Logger.LogMode(logger.Silent)
 	DBEngine = engine
-	log.Println("主数据库连接成功")
+	log.Println("数据库连接成功")
 	return nil
 }

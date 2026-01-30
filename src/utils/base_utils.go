@@ -131,6 +131,16 @@ func GetAutoSignByUserId(userId int64) *gorm.DB {
 	return bot.DBEngine.Raw("select * from user_sign where user_number = ?", userId)
 }
 
+// GetStaminaReminders 获取开启理智提醒的用户
+func GetStaminaReminders() *gorm.DB {
+	return bot.DBEngine.Raw("select * from user_sanity_reminder")
+}
+
+// GetStaminaReminderByUserId 查询用户是否开启理智提醒
+func GetStaminaReminderByUserId(userId int64) *gorm.DB {
+	return bot.DBEngine.Raw("select * from user_sanity_reminder where user_number = ? limit 1", userId)
+}
+
 // GetNewsGroups 获取开启消息推送的群组
 func GetNewsGroups() []int64 {
 	var groups []int64
