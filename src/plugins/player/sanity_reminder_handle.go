@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	bot "endfield_bot/config"
 	"endfield_bot/plugins/account"
+	"endfield_bot/plugins/messagecleaner"
 	"endfield_bot/plugins/skland"
 	"endfield_bot/utils"
 	"fmt"
 	tgbotapi "github.com/ijnkawakaze/telegram-bot-api"
 	gonanoid "github.com/matoous/go-nanoid/v2"
+	"github.com/spf13/viper"
 	"log"
 	"math/big"
 	"strconv"
@@ -31,6 +33,37 @@ func SanityReminderHandle(update tgbotapi.Update) error {
 	chatId := update.Message.Chat.ID
 	userId := update.Message.From.ID
 	messageId := update.Message.MessageID
+
+	var userAccount account.UserAccount
+	var players []account.UserPlayer
+
+	res := utils.GetAccountByUserId(userId).Scan(&userAccount)
+	if res.RowsAffected == 0 {
+		// 未绑定账号
+		sendMessage := tgbotapi.NewMessage(chatId, fmt.Sprintf("未查询到绑定账号，请先进行[绑定](https://t.me/%s)。", viper.GetString("bot.name")))
+		sendMessage.ParseMode = tgbotapi.ModeMarkdownV2
+		sendMessage.ReplyToMessageID = messageId
+		msg, err := bot.Endfield.Send(sendMessage)
+		messagecleaner.AddDelQueue(chatId, messageId, 5)
+		if err != nil {
+			return err
+		}
+		messagecleaner.AddDelQueue(msg.Chat.ID, msg.MessageID, bot.MsgDelDelay)
+		return nil
+	}
+
+	// 获取绑定角色
+	res = utils.GetPlayersByUserId(userId).Scan(&players)
+	if res.RowsAffected == 0 {
+		sendMessage := tgbotapi.NewMessage(chatId, "您还未绑定任何角色！")
+		msg, err := bot.Endfield.Send(sendMessage)
+		messagecleaner.AddDelQueue(chatId, messageId, 5)
+		if err != nil {
+			return err
+		}
+		messagecleaner.AddDelQueue(msg.Chat.ID, msg.MessageID, bot.MsgDelDelay)
+		return nil
+	}
 
 	if param == "on" {
 		var reminder UserSanityReminder

@@ -14,8 +14,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/liuzl/gocc"
 )
 
 var ctx = context.Background()
@@ -307,16 +305,4 @@ func GetImg(url string) []byte {
 		defer resp.Body.Close()
 	}
 	return pic
-}
-
-func T2S(t string) string {
-	s2t, err := gocc.New("t2s")
-	if err != nil {
-		return t
-	}
-	out, err := s2t.Convert(t)
-	if err != nil {
-		return t
-	}
-	return out
 }

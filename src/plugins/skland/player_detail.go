@@ -42,5 +42,4 @@ func iPlayerData(roleId string, skland AccountSkland, serverName string) (string
 	}
 	req := SKR().SetHeader("sk-language", "zh_Hans")
 	return SkportRequestPlayerData(req, "GET", fmt.Sprintf("/api/v1/game/endfield/card/detail?roleId=%s&serverId=%s", roleId, serverId), skland)
-
 }

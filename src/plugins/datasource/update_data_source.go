@@ -1,13 +1,11 @@
 package datasource
 
 import (
+	"endfield_bot/plugins/skland"
 	"endfield_bot/utils"
-	"github.com/spf13/viper"
 	"github.com/starudream/go-lib/core/v2/codec/json"
 	"github.com/tidwall/gjson"
-	"io"
 	"log"
-	"net/http"
 )
 
 // UpdateDataSource 更新数据源
@@ -19,16 +17,15 @@ func UpdateDataSource() {
 func UpdateDataSourceRunner() {
 	log.Println("开始更新数据源...")
 	var operators []utils.Operator
-	api := viper.GetString("api.skport")
-	result, _ := getData(api + "/web/v1/wiki/item/catalog?typeMainId=1&typeSubId=1")
-	gjson.ParseBytes(result).Get("data.catalog.0.typeSub.0.items").ForEach(func(key, value gjson.Result) bool {
+	result, _ := getData("/web/v1/wiki/item/catalog?typeMainId=1&typeSubId=1")
+	gjson.Parse(result).Get("data.catalog.0.typeSub.0.items").ForEach(func(key, value gjson.Result) bool {
 		var operator utils.Operator
-		operator.Name = utils.T2S(value.Get("name").String())
+		operator.Name = value.Get("name").String()
 		operator.ItemId = value.Get("itemId").String()
 		operator.Cover = value.Get("brief.cover").String()
 		// 获取立绘
-		result, _ := getData(api + "/web/v1/wiki/item/info?id=" + operator.ItemId)
-		illustration := gjson.ParseBytes(result).Get("data.item.document.extraInfo.illustration").String()
+		result, _ := getData("/web/v1/wiki/item/info?id=" + operator.ItemId)
+		illustration := gjson.Parse(result).Get("data.item.document.extraInfo.illustration").String()
 		operator.Illustration = illustration
 		operators = append(operators, operator)
 		return true
@@ -37,17 +34,16 @@ func UpdateDataSourceRunner() {
 	log.Println("数据源更新完毕")
 }
 
-func getData(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func getData(url string) (string, error) {
+	account := skland.Account{}
+	tokenData, err := skland.SklandRequestPlayerData(skland.SKR(), "GET", "/web/v1/auth/refresh", account.Skland)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	req.Header.Add("Sk-Language", "zh_Hant")
-	res, err := http.DefaultClient.Do(req)
+	account.Skland.Token = gjson.Parse(tokenData).Get("data.token").String()
+	data, err := skland.SklandRequestPlayerData(skland.SKR(), "GET", url, account.Skland)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	resBody, _ := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	return resBody, nil
+	return data, nil
 }

@@ -8,9 +8,11 @@ import (
 
 // 国服
 var HypergryphAddr = "https://as.hypergryph.com"
+var HypergryphAKAddr = "https://ak.hypergryph.com"
 
 // 国际服
 var GryphlineAddr = "https://as.gryphline.com"
+var GryphlineAKAddr = "https://ak.gryphline.com"
 
 type HBaseResp[T any] struct {
 	StatusCode *int   `json:"statusCode"`
@@ -70,6 +72,30 @@ func GryphlineRequest[T any](r *resty.Request, method, path string) (t T, _ erro
 
 func HypergryphASRequest(r *resty.Request, method, path string) (d string, _ error) {
 	res, err := r.Execute(method, HypergryphAddr+path)
+	if err != nil {
+		return d, fmt.Errorf("[hypergryph] %w", err)
+	}
+	return string(res.Body()), nil
+}
+
+func GryphlineASRequest(r *resty.Request, method, path string) (d string, _ error) {
+	res, err := r.Execute(method, GryphlineAddr+path)
+	if err != nil {
+		return d, fmt.Errorf("[gryphline] %w", err)
+	}
+	return string(res.Body()), nil
+}
+
+func HypergryphAKRequest(r *resty.Request, method, path string) (d string, _ error) {
+	res, err := r.Execute(method, HypergryphAKAddr+path)
+	if err != nil {
+		return d, fmt.Errorf("[hypergryph] %w", err)
+	}
+	return string(res.Body()), nil
+}
+
+func GryphlineAKRequest(r *resty.Request, method, path string) (d string, _ error) {
+	res, err := r.Execute(method, GryphlineAKAddr+path)
 	if err != nil {
 		return d, fmt.Errorf("[hypergryph] %w", err)
 	}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <title>干员仓库</title>
+    <style>
+        @font-face {
+            font-family: 'NotoSansHans';
+            src: url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'NotoSansHans', "Microsoft YaHei", sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+        }
+
+        #main {
+            width: 450px;
+            background-color: #e6e6e6;
+            padding: 15px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: linear-gradient(90deg, #333 0%, #444 100%);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: #fff;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            object-fit: cover;
+            background-color: #555;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+
+        .header-sub {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .header-count {
+            font-size: 11px;
+            background: rgba(255,255,255,0.15);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .char-card {
+            background-color: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .char-image-container {
+            width: 100%;
+            aspect-ratio: 1/1.5;
+            position: relative;
+            background-color: #ccc;
+        }
+
+        .char-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 稀有度颜色边框 */
+        .rarity-rarity_6 { border-bottom: 4px solid #ff4e00; background: linear-gradient(180deg, #fff 85%, #fff5f0 100%); }
+        .rarity-rarity_5 { border-bottom: 4px solid #ffb400; background: linear-gradient(180deg, #fff 85%, #fffaf0 100%); }
+        .rarity-rarity_4 { border-bottom: 4px solid #c384ff; background: linear-gradient(180deg, #fff 85%, #fbf5ff 100%); }
+        .rarity-rarity_3 { border-bottom: 4px solid #00b4ff; background: linear-gradient(180deg, #fff 85%, #f0faff 100%); }
+
+        .char-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 4px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: white;
+        }
+
+        .info-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .char-level {
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .evolve-icon {
+            width: 14px;
+            height: 14px;
+            object-fit: contain;
+        }
+
+        .potential-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            z-index: 3;
+            filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+        }
+
+        .char-name-container {
+            padding: 5px;
+            background-color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+        }
+
+        .class-icon, .element-icon {
+            position: absolute;
+            left: 5px;
+            width: 22px;
+            height: 22px;
+            z-index: 2;
+            background: rgba(0,0,0,0.4);
+            border-radius: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .class-icon { top: 5px; }
+        .element-icon { top: 32px; }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div class="header">
+            <div class="header-left">
+                <img class="header-avatar" src="{{.Data.Detail.Base.AvatarURL}}" onerror="this.src='/assets/box/Evolve_2.png'">
+                <div class="header-info">
+                    <div class="header-title">{{.Data.Detail.Base.Name}}</div>
+                    <div class="header-sub">干员仓库</div>
+                </div>
+            </div>
+            <div class="header-count">{{len .Data.Detail.Chars}} 名干员</div>
+        </div>
+
+        <div class="char-grid">
+            {{range .Data.Detail.Chars}}
+            <div class="char-card rarity-{{.CharData.Rarity.Key}}">
+                <div class="char-image-container">
+                    <!-- 职业和属性图标 -->
+                    <div class="class-icon" style="background: rgba(0,0,0,0.5); border-radius: 4px;">
+                        <img src="/assets/box/{{.CharData.Profession.Key}}.png" style="width:85%; height:85%; image-rendering: pixelated;" onerror="this.style.display='none'">
+                    </div>
+                    <div class="element-icon" style="background: rgba(0,0,0,0.5); border-radius: 4px;">
+                        <img src="/assets/box/{{.CharData.Property.Key}}.png" style="width:85%; height:85%; image-rendering: pixelated;" onerror="this.style.display='none'">
+                    </div>
+
+                    <img class="char-image" src="{{.CharData.AvatarRtURL}}" alt="{{.CharData.Name}}">
+                    
+                    <div class="char-info-overlay">
+                        <div class="info-bottom" style="display: flex; align-items: center; gap: 4px;">
+                            <span class="char-level">Lv.{{.Level}}</span>
+                            <img class="potential-icon-small" src="/assets/box/Potential_{{.PotentialLevel}}.png" style="width: 14px; height: 14px; object-fit: contain;" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                </div>
+                <div class="char-name-container">
+                    {{.CharData.Name}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</body>
+</html>

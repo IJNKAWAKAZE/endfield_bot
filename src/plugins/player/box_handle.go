@@ -10,17 +10,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-type PlayerOperationState struct {
+type PlayerOperationBox struct {
 	commandoperation.OperationAbstract
 }
 
-func (_ PlayerOperationState) Run(uid string, userAccount account.UserAccount, chatId int64, message *tgbotapi.Message) error {
+func (_ PlayerOperationBox) Run(uid string, userAccount account.UserAccount, chatId int64, message *tgbotapi.Message) error {
 	messageId := message.MessageID
 	sendAction := tgbotapi.NewChatAction(chatId, "upload_photo")
 	bot.Endfield.Send(sendAction)
 
 	port := viper.GetString("http.port")
-	pic, err := utils.Screenshot(fmt.Sprintf("http://localhost:%s/state?userId=%d&uid=%s&sklandId=%s", port, userAccount.UserNumber, uid, userAccount.SklandId), 0, 1)
+	pic, err := utils.Screenshot(fmt.Sprintf("http://localhost:%s/box?userId=%d&uid=%s&sklandId=%s", port, userAccount.UserNumber, uid, userAccount.SklandId), 0, 1.5)
 	if err != nil {
 		sendMessage := tgbotapi.NewMessage(chatId, err.Error())
 		sendMessage.ReplyToMessageID = messageId

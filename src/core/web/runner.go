@@ -11,6 +11,7 @@ func Start() {
 	r.Static("/assets", "./assets")
 	Help(r)
 	State(r)
+	Box(r)
 	Lottery(r)
 	port := viper.GetString("http.port")
 	err := r.Run(":" + port)
