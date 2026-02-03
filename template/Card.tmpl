@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <title>玩家名片</title>
+    <style>
+        @font-face {
+            font-family: 'NotoSansHans';
+            src: url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'NotoSansHans', "Microsoft YaHei", sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #main {
+            width: 800px;
+            height: 480px;
+            background: #2a2a2a url('/assets/card/bg.png') no-repeat center center;
+            background-size: cover;
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            display: flex;
+            gap: 25px;
+            align-items: flex-end; /* 底部对齐让布局更稳健 */
+        }
+
+        .avatar-wrap {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            border: 2px solid rgba(255,255,255,0.8);
+            padding: 3px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .avatar-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .info-basic {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* 紧凑间距 */
+            padding-bottom: 5px;
+        }
+
+        .nickname {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            line-height: 1.1;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* 标签栏横向排列 */
+        .tags-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .info-tag {
+            font-size: 13px;
+            color: rgba(255,255,255,0.85);
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 3px 12px;
+            border-radius: 4px;
+            width: fit-content;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .grid-stats {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card.large {
+            grid-row: 1 / 2;
+        }
+
+        .stat-card.tall {
+            grid-column: 2 / 3;
+            grid-row: 1 / 3;
+            align-items: center;
+            text-align: center;
+        }
+
+        .mission-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+        .mission-sub {
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .level-val {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1;
+            color: #fff;
+        }
+        .level-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 10px;
+        }
+
+        .bottom-row {
+            grid-column: 1 / 2;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .mini-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.3s;
+        }
+
+        .mini-val {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .mini-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .bg-logo {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.05;
+            width: 150px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div class="header">
+            <div class="avatar-wrap">
+                <img src="{{.Data.Detail.Base.AvatarURL}}" onerror="this.src='/assets/box/Evolve_2.png'">
+            </div>
+            <div class="info-basic">
+                <div class="nickname">{{.Data.Detail.Base.Name}}</div>
+                <div class="tags-row">
+                    <div class="info-tag">UID：{{.Data.Detail.Base.RoleID}}</div>
+                    <div class="info-tag">服务器：{{.Data.Detail.Base.ServerName}}</div>
+                    <div class="info-tag">苏醒日：{{.Data.Detail.Base.CreateTime}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-stats">
+            <div class="stat-card large">
+                <div class="mission-title">{{.Data.Detail.Base.MainMission.Description}}</div>
+                <div class="mission-sub">使命纪事</div>
+                <img class="bg-logo" src="/assets/card/logo_large.png" onerror="this.style.display='none'">
+            </div>
+            
+            <div class="stat-card tall">
+                <div class="level-val">{{.Data.Detail.Base.Level}}</div>
+                <div class="level-label">权限等阶</div>
+            </div>
+
+            <div class="bottom-row">
+                <div class="mini-card">
+                    <div class="mini-val">{{.Data.Detail.Base.CharNum}}</div>
+                    <div class="mini-label">干员</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-val">{{.Data.Detail.Base.WeaponNum}}</div>
+                    <div class="mini-label">武器</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-val">{{.Data.Detail.Base.DocNum}}</div>
+                    <div class="mini-label">档案</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-val">{{.Data.Detail.Achieve.Count}}</div>
+                    <div class="mini-label">光荣之路</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-val">{{if .Data.Detail.Domain}}{{ (index .Data.Detail.Domain 0).Level }}{{else}}0{{end}}</div>
+                    <div class="mini-label">探索等级</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

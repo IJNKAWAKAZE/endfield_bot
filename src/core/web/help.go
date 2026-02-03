@@ -41,6 +41,7 @@ func Help(r *gin.Engine) {
 		publicCmds = append(publicCmds, Cmd{Cmd: "/sanity", Desc: "关闭理智提醒", Param: "off", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/state", Desc: "当前状态", Param: "", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/box", Desc: "我的干员", Param: "", IsBind: true})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/card", Desc: "我的名片", Param: "", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/report", Desc: "举报", Param: "", IsBind: false})
 
 		// 管理员指令

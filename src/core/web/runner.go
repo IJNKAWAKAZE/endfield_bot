@@ -12,6 +12,7 @@ func Start() {
 	Help(r)
 	State(r)
 	Box(r)
+	Card(r)
 	Lottery(r)
 	port := viper.GetString("http.port")
 	err := r.Run(":" + port)

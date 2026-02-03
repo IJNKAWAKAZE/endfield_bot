@@ -8,6 +8,7 @@ var (
 	playerOperationMap = map[string]commandoperation.OperationI{
 		"state": PlayerOperationState{},
 		"box":   PlayerOperationBox{},
+		"card":  PlayerOperationCard{},
 	}
 )
 
