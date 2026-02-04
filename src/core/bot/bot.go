@@ -31,6 +31,8 @@ func Serve() {
 	b.NewCallBackProcessor("sign", sign.SignPlayer)
 	b.NewCallBackProcessor("player", player.PlayerData)
 	b.NewCallBackProcessor("report", system.Report)
+	b.NewCallBackProcessor("box_detail_page", player.BoxDetailCallback)
+	b.NewCallBackProcessor("box_detail_char", player.BoxDetailCallback)
 
 	// 私聊
 	b.NewPrivateCommandProcessor("start", system.HelpHandle)
@@ -51,6 +53,7 @@ func Serve() {
 	b.NewCommandProcessor("state", player.PlayerHandle)
 	b.NewCommandProcessor("box", player.PlayerHandle)
 	b.NewCommandProcessor("card", player.PlayerHandle)
+	b.NewCommandProcessor("box_detail", player.PlayerHandle)
 	b.NewCommandProcessor("report", system.ReportHandle)
 	b.NewCommandProcessor("join_lottery", lottery.JoinLotteryHandle)
 	b.NewCommandProcessor("lottery_detail", lottery.LotteryDetailHandle)

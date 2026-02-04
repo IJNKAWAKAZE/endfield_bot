@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <title>干员详情 - {{.Char.CharData.Name}}</title>
+    <style>
+        @font-face {
+            font-family: 'NotoSansHans';
+            src: url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'NotoSansHans', "Microsoft YaHei", sans-serif;
+            background-color: #0f0f0f;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #main {
+            width: 1000px;
+            height: 600px;
+            background: #1a1a1a;
+            position: relative;
+            display: flex;
+            padding: 20px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        /* 背景美化 */
+        .bg-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transform: rotate(-5deg);
+        }
+
+        .bg-glow-1 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 78, 0, 0.08) 0%, transparent 70%);
+            top: -200px;
+            right: -100px;
+            filter: blur(50px);
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.05) 0%, transparent 70%);
+            bottom: -150px;
+            left: -100px;
+            filter: blur(40px);
+        }
+
+        .bg-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            height: 1px;
+            width: 100%;
+        }
+
+        /* 中间面板：立绘 & 基础信息 */
+        .center-panel {
+            width: 400px; /* 给中间立绘腾出固定空间 */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            z-index: 10;
+            overflow: visible; /* 允许立绘微调溢出但不阻挡侧边 */
+        }
+
+        .illustration-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px; /* 限制立绘容器宽度，防止遮挡侧边点击/显示 */
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            pointer-events: none; /* 穿透点击，防止阻挡 */
+        }
+
+        .illustration {
+            height: 110%; /* 立绘高度适当溢出实现冲击感 */
+            max-width: none;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+        }
+
+        .char-base-info {
+            width: 100%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8) 40%);
+            padding: 30px 10px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 15;
+            position: relative;
+        }
+
+        .char-name {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .char-tags {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tag {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* 侧边面板 */
+        .side-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 20;
+            height: 100%; /* 确保面板撑满高度 */
+        }
+
+        .left-panel { border-right: 1px solid rgba(255,255,255,0.05); padding-right: 15px; }
+        .right-panel { border-left: 1px solid rgba(255,255,255,0.05); padding-left: 15px; }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* 属性卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+        .stat-value { font-size: 16px; font-weight: bold; }
+
+        /* 等级和潜能 */
+        .level-potential {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.08);
+            padding: 12px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .lv-box { display: flex; align-items: baseline; gap: 4px; }
+        .lv-label { font-size: 13px; color: rgba(255,255,255,0.5); }
+        .lv-val { font-size: 28px; font-weight: 900; }
+
+        .potential-box {
+            display: flex;
+            gap: 4px;
+        }
+
+        .potential-icon-large {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(255,180,0,0.3));
+        }
+
+        /* 装备卡片 */
+        .equip-card {
+            background: rgba(0, 0, 0, 0.4); /* 加深卡片背景，提高对比度 */
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08); /* 稍微加强边框 */
+            flex-shrink: 0;
+            backdrop-filter: blur(4px); /* 添加背景模糊，防止被背景网格干扰 */
+        }
+
+        .equip-icon {
+            width: 40px;
+            height: 40px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            padding: 4px;
+            box-sizing: border-box;
+            border: 2px solid rgba(255, 255, 255, 0.1); /* 默认边框 */
+            flex-shrink: 0;
+        }
+
+        /* 稀有度边框颜色 - 支持多种可能的Key格式 */
+        .rarity-1, .rarity-Key_1, .rarity-equip_rarity_1, .rarity-rarity_1 { border-color: #8e8e8e !important; } /* 1星 - 灰色 */
+        .rarity-2, .rarity-Key_2, .rarity-equip_rarity_2, .rarity-rarity_2 { border-color: #4b8e3a !important; } /* 2星 - 绿色 */
+        .rarity-3, .rarity-Key_3, .rarity-equip_rarity_3, .rarity-rarity_3 { border-color: #3b88c3 !important; } /* 3星 - 蓝色 */
+        .rarity-4, .rarity-Key_4, .rarity-equip_rarity_4, .rarity-rarity_4 { border-color: #9254de !important; } /* 4星 - 紫色 */
+        .rarity-5, .rarity-Key_5, .rarity-equip_rarity_5, .rarity-rarity_5 { border-color: #ffb400 !important; } /* 5星 - 金色/橙色 */
+        .rarity-6, .rarity-Key_6, .rarity-equip_rarity_6, .rarity-rarity_6 { border-color: #ff4d4f !important; } /* 6星 - 红色/顶级 */
+
+        .equip-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+        .equip-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .equip-lv { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+        /* 技能列表 */
+        .skill-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            flex-shrink: 0;
+        }
+        
+        .skill-item {
+            background: rgba(255,255,255,0.03);
+            padding: 6px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .skill-icon { width: 28px; height: 28px; flex-shrink: 0; }
+        .skill-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .skill-level { font-size: 11px; margin-left: auto; color: #ffb400; font-weight: bold; flex-shrink: 0; }
+
+        /* 装备网格布局 */
+        .equip-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .equip-grid .equip-card {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 12px 5px;
+            height: 120px;
+            justify-content: center;
+        }
+
+        .equip-grid .equip-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 8px;
+        }
+
+        .equip-grid .equip-info {
+            align-items: center;
+            width: 100%;
+        }
+
+        /* 底部装饰信息栏 */
+        .char-extra-info {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            padding: 15px;
+            border-left: 3px solid #ffb400;
+            flex-shrink: 0;
+        }
+
+        .extra-title {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .extra-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div class="bg-decoration">
+            <div class="bg-grid"></div>
+            <div class="bg-glow-1"></div>
+            <div class="bg-glow-2"></div>
+            <div class="bg-line" style="top: 20%; opacity: 0.3;"></div>
+            <div class="bg-line" style="bottom: 30%; opacity: 0.2;"></div>
+        </div>
+
+        <!-- 左侧：基础属性 & 武器 -->
+        <div class="side-panel left-panel">
+            <div class="section-title">基础状态</div>
+            <div class="level-potential">
+                <div class="lv-box">
+                    <span class="lv-label">等级</span>
+                    <span class="lv-val">{{.Char.Level}}</span>
+                </div>
+                <img class="potential-icon-large" src="/assets/box/Potential_{{.Char.PotentialLevel}}.png" onerror="this.style.display='none'">
+            </div>
+
+            <div class="section-title">武器装备</div>
+            {{if .Char.Weapon.WeaponData.Name}}
+            <div class="equip-card">
+                <img class="equip-icon rarity-{{.Char.Weapon.WeaponData.Rarity.Key}}" src="{{.Char.Weapon.WeaponData.IconURL}}">
+                <div class="equip-info">
+                    <div class="equip-name">{{.Char.Weapon.WeaponData.Name}}</div>
+                    <div class="equip-lv">精炼 {{.Char.Weapon.RefineLevel}} / 等级 {{.Char.Weapon.Level}}</div>
+                </div>
+            </div>
+            {{else}}
+            <div class="equip-card" style="opacity: 0.5;">未装备武器</div>
+            {{end}}
+
+            <div class="section-title">战术道具</div>
+            {{if .Char.TacticalItem.TacticalItemData.Name}}
+            <div class="equip-card">
+                <img class="equip-icon rarity-{{.Char.TacticalItem.TacticalItemData.Rarity.Key}}" src="{{.Char.TacticalItem.TacticalItemData.IconURL}}">
+                <div class="equip-info">
+                    <div class="equip-name">{{.Char.TacticalItem.TacticalItemData.Name}}</div>
+                    <div class="equip-lv">{{.Char.TacticalItem.TacticalItemData.ActiveEffectType.Value}}</div>
+                </div>
+            </div>
+            {{else}}
+            <div class="equip-card" style="opacity: 0.5;">未装备战术道具</div>
+            {{end}}
+
+            <div class="section-title">技能等级</div>
+            <div class="skill-list">
+                {{range .Char.CharData.Skills}}
+                <div class="skill-item">
+                    <img class="skill-icon" src="{{.IconURL}}">
+                    <div class="skill-name">{{.Name}}</div>
+                    {{$skillId := .ID}}
+                    {{with index $.Char.UserSkills $skillId}}
+                    <div class="skill-level">Lvl.{{.Level}}</div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+
+        <!-- 中间：立绘 -->
+        <div class="center-panel">
+            <div class="illustration-container">
+                <img class="illustration" src="{{.Char.CharData.IllustrationURL}}" alt="{{.Char.CharData.Name}}">
+            </div>
+            <div class="char-base-info">
+                <div class="char-name">{{.Char.CharData.Name}}</div>
+                <div class="char-tags">
+                    <span class="tag">{{.Char.CharData.Profession.Value}}</span>
+                    <span class="tag">{{.Char.CharData.Property.Value}}</span>
+                    <span class="tag">{{.Char.CharData.Rarity.Value}}★</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：装备集成 -->
+        <div class="side-panel right-panel">
+            <div class="section-title">集成设备情况</div>
+            
+            <div class="equip-grid">
+                <!-- 躯干 -->
+                {{if .Char.BodyEquip.EquipData.Name}}
+                <div class="equip-card">
+                    <img class="equip-icon rarity-{{.Char.BodyEquip.EquipData.Rarity.Key}}" src="{{.Char.BodyEquip.EquipData.IconURL}}">
+                    <div class="equip-info">
+                        <div class="equip-name">{{.Char.BodyEquip.EquipData.Name}}</div>
+                        <div class="equip-lv">躯干 Lv.{{.Char.BodyEquip.EquipData.Level.Value}}</div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="equip-card" style="opacity: 0.5;">
+                    <div class="equip-name">躯干</div>
+                    <div class="equip-lv">尚未集成</div>
+                </div>
+                {{end}}
+
+                <!-- 手臂 -->
+                {{if .Char.ArmEquip.EquipData.Name}}
+                <div class="equip-card">
+                    <img class="equip-icon rarity-{{.Char.ArmEquip.EquipData.Rarity.Key}}" src="{{.Char.ArmEquip.EquipData.IconURL}}">
+                    <div class="equip-info">
+                        <div class="equip-name">{{.Char.ArmEquip.EquipData.Name}}</div>
+                        <div class="equip-lv">手臂 Lv.{{.Char.ArmEquip.EquipData.Level.Value}}</div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="equip-card" style="opacity: 0.5;">
+                    <div class="equip-name">手臂</div>
+                    <div class="equip-lv">尚未集成</div>
+                </div>
+                {{end}}
+
+                <!-- 饰品1 -->
+                {{if .Char.FirstAccessory.EquipData.Name}}
+                <div class="equip-card">
+                    <img class="equip-icon rarity-{{.Char.FirstAccessory.EquipData.Rarity.Key}}" src="{{.Char.FirstAccessory.EquipData.IconURL}}">
+                    <div class="equip-info">
+                        <div class="equip-name">{{.Char.FirstAccessory.EquipData.Name}}</div>
+                        <div class="equip-lv">饰品1 Lv.{{.Char.FirstAccessory.EquipData.Level.Value}}</div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="equip-card" style="opacity: 0.5;">
+                    <div class="equip-name">饰品1</div>
+                    <div class="equip-lv">尚未集成</div>
+                </div>
+                {{end}}
+
+                <!-- 饰品2 -->
+                {{if .Char.SecondAccessory.EquipData.Name}}
+                <div class="equip-card">
+                    <img class="equip-icon rarity-{{.Char.SecondAccessory.EquipData.Rarity.Key}}" src="{{.Char.SecondAccessory.EquipData.IconURL}}">
+                    <div class="equip-info">
+                        <div class="equip-name">{{.Char.SecondAccessory.EquipData.Name}}</div>
+                        <div class="equip-lv">饰品2 Lv.{{.Char.SecondAccessory.EquipData.Level.Value}}</div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="equip-card" style="opacity: 0.5;">
+                    <div class="equip-name">饰品2</div>
+                    <div class="equip-lv">尚未集成</div>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="char-extra-info">
+                <div class="extra-title">Administrator Protocol</div>
+                <div class="extra-content">
+                    "塔卫二的未来取决于每一个深思熟虑的决策。协议已启动，正在实时监控所有集成设备的能量流向。"
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -6,9 +6,10 @@ import (
 
 var (
 	playerOperationMap = map[string]commandoperation.OperationI{
-		"state": PlayerOperationState{},
-		"box":   PlayerOperationBox{},
-		"card":  PlayerOperationCard{},
+		"state":      PlayerOperationState{},
+		"box":        PlayerOperationBox{},
+		"card":       PlayerOperationCard{},
+		"box_detail": PlayerOperationBoxDetail{},
 	}
 )
 
