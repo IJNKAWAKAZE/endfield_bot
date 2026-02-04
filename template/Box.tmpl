@@ -20,9 +20,10 @@
         }
 
         #main {
-            width: 450px;
+            max-width: 1200px;
+            width: 100%;
             background-color: #e6e6e6;
-            padding: 15px;
+            padding: 20px;
             box-sizing: border-box;
             position: relative;
         }
@@ -31,11 +32,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding: 8px 12px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
             background: linear-gradient(90deg, #333 0%, #444 100%);
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
             color: #fff;
         }
 
@@ -81,18 +82,24 @@
 
         .char-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
         }
 
         .char-card {
             background-color: #fff;
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
             position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .char-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
         }
 
         .char-image-container {
