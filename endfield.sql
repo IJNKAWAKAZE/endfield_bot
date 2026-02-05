@@ -90,6 +90,28 @@ CREATE TABLE `user_account`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户账户信息' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for user_gacha
+-- ----------------------------
+DROP TABLE IF EXISTS `user_gacha`;
+CREATE TABLE `user_gacha`  (
+  `id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `uid` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'UID',
+  `pool_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '卡池 ID',
+  `pool_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '卡池名称',
+  `pool_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '卡池类型：char, weapon',
+  `item_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '物品 ID (charId 或 itemId)',
+  `item_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '物品名称',
+  `item_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '物品类型：CHARACTER, WEAPON',
+  `rarity` int NOT NULL COMMENT '稀有度：3, 4, 5',
+  `is_new` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否首次获得：0-否，1-是',
+  `gacha_ts` bigint NOT NULL COMMENT '抽卡时间戳（毫秒）',
+  `seq_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '序列 ID，唯一标识',
+  `create_time` timestamp(0) NULL DEFAULT NULL,
+  `update_time` timestamp(0) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户抽卡记录' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for user_player
 -- ----------------------------
 DROP TABLE IF EXISTS `user_player`;

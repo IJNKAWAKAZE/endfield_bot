@@ -43,6 +43,7 @@ func Help(r *gin.Engine) {
 		publicCmds = append(publicCmds, Cmd{Cmd: "/box", Desc: "我的干员", Param: "", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/box_detail", Desc: "干员详情", Param: "", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/card", Desc: "我的名片", Param: "", IsBind: true})
+		publicCmds = append(publicCmds, Cmd{Cmd: "/gacha", Desc: "抽卡分析", Param: "", IsBind: true})
 		publicCmds = append(publicCmds, Cmd{Cmd: "/report", Desc: "举报", Param: "", IsBind: false})
 
 		// 管理员指令

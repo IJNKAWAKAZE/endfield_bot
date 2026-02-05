@@ -15,3 +15,7 @@ type UserPlayer struct {
 	UpdateTime time.Time `json:"updateTime" gorm:"autoUpdateTime"`
 	Remark     string    `json:"remark"`
 }
+
+func (UserPlayer) TableName() string {
+	return "user_player"
+}

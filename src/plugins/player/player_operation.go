@@ -10,6 +10,7 @@ var (
 		"box":        PlayerOperationBox{},
 		"card":       PlayerOperationCard{},
 		"box_detail": PlayerOperationBoxDetail{},
+		"gacha":      PlayerOperationGacha{},
 	}
 )
 

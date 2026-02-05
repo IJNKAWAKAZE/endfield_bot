@@ -4,6 +4,7 @@ import (
 	bot "endfield_bot/config"
 	"fmt"
 	"github.com/starudream/go-lib/core/v2/gh"
+	"github.com/tidwall/gjson"
 	"log"
 )
 
@@ -235,4 +236,35 @@ func EndfieldPlayers(skland AccountSkland, serverName string) ([]*Player, error)
 		}
 	}
 	return players, nil
+}
+
+func GetU8Token(token, uid, serverName string) (string, error) {
+	if token == "" {
+		return "", fmt.Errorf("token is empty")
+	}
+	provider := "hypergryph"
+	var grantAppToken string
+	var err error
+	if serverName == "国服" {
+		reqGrantApp := HR().SetBody(gh.M{"type": 1, "token": token, "appCode": "be36d44aa36bfb5b"})
+		grantAppToken, err = HypergryphASRequest(reqGrantApp, "POST", "/user/oauth2/v2/grant")
+		if err != nil {
+			return "", fmt.Errorf("grant app error: %w", err)
+		}
+	} else if serverName == "国际服" {
+		provider = "gryphline"
+		reqGrantApp := HR().SetBody(gh.M{"type": 1, "token": token, "appCode": "3dacefa138426cfe"})
+		grantAppToken, err = GryphlineASRequest(reqGrantApp, "POST", "/user/oauth2/v2/grant")
+		if err != nil {
+			return "", fmt.Errorf("grant app error: %w", err)
+		}
+	}
+
+	reqU8Token := HR().SetBody(gh.M{"token": gjson.Parse(grantAppToken).Get("data.token").String(), "uid": uid})
+	res, err := reqU8Token.Execute("POST", fmt.Sprintf("https://binding-api-account-prod.%s.com/account/binding/v1/u8_token_by_uid", provider))
+	if err != nil {
+		return "", fmt.Errorf("get u8token error: %w", err)
+	}
+	u8Token := gjson.Parse(string(res.Body())).Get("data.token").String()
+	return u8Token, nil
 }

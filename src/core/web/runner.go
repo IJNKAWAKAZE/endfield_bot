@@ -15,6 +15,7 @@ func Start() {
 	BoxDetail(r)
 	Card(r)
 	Lottery(r)
+	Gacha(r)
 	port := viper.GetString("http.port")
 	err := r.Run(":" + port)
 	if err != nil {

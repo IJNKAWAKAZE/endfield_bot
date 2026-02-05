@@ -48,9 +48,15 @@ type GroupJoined struct {
 	Remark      string    `json:"remark"`
 }
 
+// NewId 生成UUID
+func NewId() string {
+	id, _ := gonanoid.New(32)
+	return id
+}
+
 // SaveInvite 保存邀请记录
 func SaveInvite(message *tgbotapi.Message, member *tgbotapi.User) {
-	id, _ := gonanoid.New(32)
+	id := NewId()
 	groupInvite := GroupInvite{
 		Id:           id,
 		GroupName:    message.Chat.Title,
@@ -66,7 +72,7 @@ func SaveInvite(message *tgbotapi.Message, member *tgbotapi.User) {
 
 // SaveJoined 保存入群记录
 func SaveJoined(message *tgbotapi.Message) {
-	id, _ := gonanoid.New(32)
+	id := NewId()
 	groupJoined := GroupJoined{
 		Id:          id,
 		GroupName:   message.Chat.Title,
