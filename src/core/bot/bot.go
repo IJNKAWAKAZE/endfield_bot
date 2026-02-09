@@ -55,6 +55,7 @@ func Serve() {
 	b.NewCommandProcessor("card", player.PlayerHandle)
 	b.NewCommandProcessor("box_detail", player.PlayerHandle)
 	b.NewCommandProcessor("gacha", player.PlayerHandle)
+	b.NewCommandProcessor("explore", player.PlayerHandle)
 	b.NewCommandProcessor("report", system.ReportHandle)
 	b.NewCommandProcessor("join_lottery", lottery.JoinLotteryHandle)
 	b.NewCommandProcessor("lottery_detail", lottery.LotteryDetailHandle)

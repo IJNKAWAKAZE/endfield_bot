@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <title>探索进度 - {{.Player.Data.Detail.Base.Name}}</title>
+    <style>
+        @font-face {
+            font-family: 'NotoSansHans';
+            src: url('/assets/font/NotoSansHans-Regular.ttf');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'NotoSansHans', "Microsoft YaHei", sans-serif;
+            background-color: #0c0c0e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #main {
+            width: 900px;
+            background: linear-gradient(135deg, #161618 0%, #1c1c1f 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decoration */
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ffb400;
+            padding-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #ffb400;
+        }
+
+        .user-name {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .user-lv {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .title {
+            font-size: 18px;
+            color: #ffb400;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .domain-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .domain-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .domain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .domain-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .domain-lv {
+            background: rgba(255, 180, 0, 0.1);
+            color: #ffb400;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 180, 0, 0.3);
+        }
+
+        .collection-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .collection-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .collection-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 2px;
+        }
+
+        .progress-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .stat-label { color: rgba(255, 255, 255, 0.4); }
+        .stat-val { font-weight: bold; color: #fff; }
+
+        .settlement-group {
+            margin-top: 5px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .settlement-tag {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div class="bg-grid"></div>
+        
+        <div class="header">
+            <div class="user-info">
+                <img class="avatar" src="{{.Player.Data.Detail.Base.AvatarURL}}">
+                <div>
+                    <div class="user-name">{{.Player.Data.Detail.Base.Name}}</div>
+                    <div class="user-lv">等级 {{.Player.Data.Detail.Base.Level}} | 世界等级 {{.Player.Data.Detail.Base.WorldLevel}}</div>
+                </div>
+            </div>
+            <div class="title">Map Exploration Progress</div>
+        </div>
+
+        <div class="domain-container">
+            {{range .Domain}}
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div class="domain-name">{{.Name}}</div>
+                    <div class="domain-lv">探索等级 {{.Level}}</div>
+                </div>
+
+                <div class="settlement-group">
+                    {{range .Settlements}}
+                    <span class="settlement-tag">{{.Name}} Lv.{{.Level}}</span>
+                    {{end}}
+                </div>
+
+                <div class="collection-list">
+                    {{range .Collections}}
+                    <div class="collection-item">
+                        <div class="collection-title">区域: {{.Name}}</div>
+                        <div class="progress-group">
+                            <div class="stat-box">
+                                <span class="stat-label">醚质</span>
+                                <span class="stat-val">{{.PuzzleCount}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">储藏箱</span>
+                                <span class="stat-val">{{.TrchestCount}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">协议采录箱</span>
+                                <span class="stat-val">{{.BlackboxCount}}</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">维修灵感点</span>
+                                <span class="stat-val">{{.PieceCount}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+
+    </div>
+</body>
+</html>

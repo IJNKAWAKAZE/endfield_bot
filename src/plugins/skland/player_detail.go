@@ -7,6 +7,21 @@ import (
 	"log"
 )
 
+type MapTreeResp struct {
+	Maps []MapCategory `json:"maps"`
+}
+
+type MapCategory struct {
+	ID     string    `json:"id"`
+	Name   string    `json:"name"`
+	Levels []MapNode `json:"levels"`
+}
+
+type MapNode struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 func GetPlayerData(roleId, serverName, playerServerName string, account Account) (*PlayerDetail, error) {
 	var playerDetail *PlayerDetail
 	account, err := RefreshToken(account, serverName)
@@ -42,4 +57,8 @@ func iPlayerData(roleId string, skland AccountSkland, serverName string) (string
 	}
 	req := SKR().SetHeader("sk-language", "zh_Hans")
 	return SkportRequestPlayerData(req, "GET", fmt.Sprintf("/api/v1/game/endfield/card/detail?roleId=%s&serverId=%s", roleId, serverId), skland)
+}
+func GetMapTree(account Account) (*MapTreeResp, error) {
+	req := SKR()
+	return SklandRequest[*MapTreeResp](req, "GET", "/web/v1/game/endfield/map/tree", account.Skland)
 }

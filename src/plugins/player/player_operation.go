@@ -11,6 +11,7 @@ var (
 		"card":       PlayerOperationCard{},
 		"box_detail": PlayerOperationBoxDetail{},
 		"gacha":      PlayerOperationGacha{},
+		"explore":    PlayerOperationExplore{},
 	}
 )
 

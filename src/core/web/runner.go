@@ -16,6 +16,7 @@ func Start() {
 	Card(r)
 	Lottery(r)
 	Gacha(r)
+	Explore(r)
 	port := viper.GetString("http.port")
 	err := r.Run(":" + port)
 	if err != nil {

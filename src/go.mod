@@ -7,7 +7,6 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/ijnkawakaze/telegram-bot-api v1.0.10
-	github.com/liuzl/gocc v0.0.0-20231231122217-0372e1059ca5
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/playwright-community/playwright-go v0.2000.1
 	github.com/robfig/cron/v3 v3.0.0
@@ -21,7 +20,6 @@ require (
 )
 
 require (
-	github.com/adamzy/cedar-go v0.0.0-20170805034717-80a9c64b256d // indirect
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -48,8 +46,6 @@ require (
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/knadh/koanf/v2 v2.0.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/liuzl/cedar-go v0.0.0-20170805034717-80a9c64b256d // indirect
-	github.com/liuzl/da v0.0.0-20180704015230-14771aad5b1d // indirect
 	github.com/lmittmann/tint v1.0.3 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
