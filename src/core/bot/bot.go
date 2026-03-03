@@ -48,6 +48,7 @@ func Serve() {
 	// 普通
 	b.NewCommandProcessor("help", system.HelpHandle)
 	b.NewCommandProcessor("ping", system.PingHandle)
+	b.NewCommandProcessor("tag", system.TagHandle)
 	b.NewCommandProcessor("sign", sign.SignHandle)
 	b.NewCommandProcessor("sanity", player.SanityReminderHandle)
 	b.NewCommandProcessor("state", player.PlayerHandle)
