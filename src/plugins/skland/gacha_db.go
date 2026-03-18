@@ -5,6 +5,7 @@ import (
 	"endfield_bot/utils"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -46,17 +47,17 @@ func SyncGachaRecordsToDB(uid string, records []GachaRecord) (int, error) {
 
 	// 2. 对每个卡池分别处理增量逻辑
 	for poolId, poolRecords := range recordsByPool {
-		// 获取该用户在该卡池已有的最新记录的 SeqId
+		// 获取该用户在该卡池已有的最新记录的时间戳
 		var latestRecord UserGacha
-		// 注意：这里必须同时限定 uid 和 pool_id
-		bot.DBEngine.Where("uid = ? AND pool_id = ?", uid, poolId).Order("seq_id DESC").First(&latestRecord)
-		latestSeqId := latestRecord.SeqId
+		bot.DBEngine.Where("uid = ? AND pool_id = ?", uid, poolId).
+			Order("gacha_ts DESC").
+			Order("length(seq_id) DESC").
+			Order("seq_id DESC").
+			First(&latestRecord)
 
 		// 筛选该池子的新记录
 		for _, r := range poolRecords {
-			// 如果是新记录（SeqId 更大或该池子尚无记录）
-			// 字符串比较 seqId，假设 seqId 是字典序递增的字符串，或者可以转 int 比较。通常 seqId 是字符串ID。
-			if latestSeqId == "" || r.SeqId > latestSeqId {
+			if latestRecord.GachaTs == 0 || isRecordNewer(r, latestRecord) {
 				newRecords = append(newRecords, UserGacha{
 					Id:       utils.NewId(), // 使用 utils.NewId() 生成 ID
 					Uid:      uid,
@@ -93,7 +94,11 @@ func SyncGachaRecordsToDB(uid string, records []GachaRecord) (int, error) {
 // GetGachaRecordsFromDB 从数据库获取用户的所有抽卡记录
 func GetGachaRecordsFromDB(uid string) ([]GachaRecord, error) {
 	var dbRecords []UserGacha
-	result := bot.DBEngine.Where("uid = ?", uid).Order("seq_id DESC").Find(&dbRecords)
+	result := bot.DBEngine.Where("uid = ?", uid).
+		Order("gacha_ts DESC").
+		Order("length(seq_id) DESC").
+		Order("seq_id DESC").
+		Find(&dbRecords)
 	if result.Error != nil {
 		return nil, fmt.Errorf("查询抽卡记录失败: %w", result.Error)
 	}
@@ -116,4 +121,35 @@ func GetGachaRecordsFromDB(uid string) ([]GachaRecord, error) {
 	}
 
 	return records, nil
+}
+
+func isRecordNewer(record GachaRecord, latestRecord UserGacha) bool {
+	if record.Ts != latestRecord.GachaTs {
+		return record.Ts > latestRecord.GachaTs
+	}
+	return compareSeqID(record.SeqId, latestRecord.SeqId) > 0
+}
+
+func compareSeqID(left, right string) int {
+	leftSeq, leftErr := strconv.ParseInt(left, 10, 64)
+	rightSeq, rightErr := strconv.ParseInt(right, 10, 64)
+	if leftErr == nil && rightErr == nil {
+		switch {
+		case leftSeq < rightSeq:
+			return -1
+		case leftSeq > rightSeq:
+			return 1
+		default:
+			return 0
+		}
+	}
+
+	switch {
+	case left < right:
+		return -1
+	case left > right:
+		return 1
+	default:
+		return 0
+	}
 }

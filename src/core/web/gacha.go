@@ -7,20 +7,33 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 )
 
+const (
+	poolCategoryBase    = "base"
+	poolCategoryLimited = "limited"
+)
+
 type GachaAnalysisData struct {
-	UID               string
-	PlayerName        string
-	ServerName        string
-	RoleId            string
-	SyncTime          string
-	CharStats         StatsSummary
-	WeaponStats       StatsSummary
-	RecentCharPulls   []SixStarDetail
-	RecentWeaponPulls []SixStarDetail
-	Pools             []PoolAnalysis
+	UID        string
+	PlayerName string
+	ServerName string
+	RoleId     string
+	SyncTime   string
+	Sections   []GachaTypeSection
+}
+
+type GachaTypeSection struct {
+	TypeLabel          string
+	TypeKey            string
+	Stats              StatsSummary
+	LimitedCurrentPity int
+	RecentPulls        []SixStarDetail
+	BasePools          []PoolAnalysis
+	LimitedPools       []PoolAnalysis
 }
 
 type StatsSummary struct {
@@ -31,12 +44,17 @@ type StatsSummary struct {
 
 type PoolAnalysis struct {
 	Name           string
-	Type           string // char, weapon
+	Type           string
+	Category       string
+	CategoryLabel  string
 	Total          int
 	CurrentPity    int
 	SixStarRate    float64
 	RecentSixStars []SixStarDetail
-	LastTimeMs     int64 // 用于排序活跃度
+	FirstTimeMs    int64
+	LastTimeMs     int64
+	FirstSeqId     string
+	LastSeqId      string
 }
 
 type SixStarDetail struct {
@@ -46,6 +64,8 @@ type SixStarDetail struct {
 	Rarity    int
 	Pity      int
 	GlobalIdx int
+	Ts        int64
+	SeqId     string
 }
 
 func Gacha(r *gin.Engine) {
@@ -64,7 +84,6 @@ func Gacha(r *gin.Engine) {
 			return
 		}
 
-		// 获取玩家详细信息
 		var player account.UserPlayer
 		result := bot.DBEngine.Table("user_player").Where("uid = ?", uid).First(&player)
 		if result.Error != nil {
@@ -86,181 +105,194 @@ func analyzeGacha(uid string, allRecords []skland.GachaRecord, player account.Us
 		ServerName: player.ServerName,
 		RoleId:     player.RoleId,
 		SyncTime:   time.Now().Format("2006-01-02 15:04:05"),
-		Pools:      []PoolAnalysis{},
 	}
 
-	// 1. 分离记录
-	var charRecords, weaponRecords []skland.GachaRecord
-	for _, r := range allRecords {
-		if r.PoolType == "char" {
-			charRecords = append(charRecords, r)
-		} else {
-			weaponRecords = append(weaponRecords, r)
-		}
+	data.Sections = []GachaTypeSection{
+		buildGachaTypeSection("char", "角色池", filterRecordsByType(allRecords, "char")),
+		buildGachaTypeSection("weapon", "武器池", filterRecordsByType(allRecords, "weapon")),
 	}
-
-	// 2. 计算统计数据
-	data.CharStats = calculateStats(charRecords)
-	data.WeaponStats = calculateStats(weaponRecords)
-
-	// 收集所有六星记录用于展示（带PoolName）
-	var allCharSixStars []SixStarDetail
-	var allWeaponSixStars []SixStarDetail
-
-	// 3. 按池子分析详情
-	poolMap := make(map[string][]skland.GachaRecord)
-	poolInfo := make(map[string]skland.GachaRecord)
-
-	for _, r := range allRecords {
-		poolMap[r.PoolId] = append(poolMap[r.PoolId], r)
-		if _, ok := poolInfo[r.PoolId]; !ok {
-			poolInfo[r.PoolId] = r
-		}
-	}
-
-	for pId, pRecords := range poolMap {
-		// 按 SeqId 排序（时间正序）
-		sort.Slice(pRecords, func(i, j int) bool {
-			return pRecords[i].SeqId < pRecords[j].SeqId
-		})
-
-		// 获取该池子最新的记录时间
-		lastTs := int64(0)
-		if len(pRecords) > 0 {
-			lastTs = pRecords[len(pRecords)-1].Ts
-		}
-
-		info := poolInfo[pId]
-		pAnalysis := PoolAnalysis{
-			Name:       info.PoolName,
-			Type:       info.PoolType,
-			Total:      len(pRecords),
-			LastTimeMs: lastTs,
-		}
-
-		pity := 0
-		var sixStarDetails []SixStarDetail
-		for i, r := range pRecords {
-			pity++
-			if r.Rarity == 6 {
-				detail := SixStarDetail{
-					PoolName:  info.PoolName,
-					ItemName:  r.ItemName,
-					TimeStr:   time.Unix(r.Ts/1000, 0).Format("2006-01-02 15:04"),
-					Rarity:    6,
-					Pity:      pity,
-					GlobalIdx: i + 1,
-				}
-				sixStarDetails = append(sixStarDetails, detail)
-				pity = 0 // 重置保底
-			}
-		}
-		pAnalysis.CurrentPity = pity
-		if pAnalysis.Total > 0 {
-			pAnalysis.SixStarRate = float64(len(sixStarDetails)) / float64(pAnalysis.Total) * 100
-		}
-
-		// 这里只需要最近5条给池子详情（如果还展示的话）
-		if len(sixStarDetails) > 5 {
-			pAnalysis.RecentSixStars = sixStarDetails[len(sixStarDetails)-5:]
-		} else {
-			pAnalysis.RecentSixStars = sixStarDetails
-		}
-		// 反转
-		for i, j := 0, len(pAnalysis.RecentSixStars)-1; i < j; i, j = i+1, j-1 {
-			pAnalysis.RecentSixStars[i], pAnalysis.RecentSixStars[j] = pAnalysis.RecentSixStars[j], pAnalysis.RecentSixStars[i]
-		}
-
-		data.Pools = append(data.Pools, pAnalysis)
-
-		// 收集到全局列表
-		if info.PoolType == "char" {
-			allCharSixStars = append(allCharSixStars, sixStarDetails...)
-		} else {
-			allWeaponSixStars = append(allWeaponSixStars, sixStarDetails...)
-		}
-	}
-
-	// 4. 处理全局近期记录
-	// 倒序
-	sortSixStarsDesc(allCharSixStars)
-	sortSixStarsDesc(allWeaponSixStars)
-
-	limit := 20
-	if len(allCharSixStars) > limit {
-		data.RecentCharPulls = allCharSixStars[:limit]
-	} else {
-		data.RecentCharPulls = allCharSixStars
-	}
-
-	if len(allWeaponSixStars) > limit {
-		data.RecentWeaponPulls = allWeaponSixStars[:limit]
-	} else {
-		data.RecentWeaponPulls = allWeaponSixStars
-	}
-
-	// 对 Pools 进行筛选：只保留最近活跃的 6 个
-	sort.Slice(data.Pools, func(i, j int) bool {
-		// 先按最后活跃时间降序排，找出最近的 6 个
-		return data.Pools[i].LastTimeMs > data.Pools[j].LastTimeMs
-	})
-
-	maxPools := 6
-	if len(data.Pools) > maxPools {
-		data.Pools = data.Pools[:maxPools]
-	}
-
-	// 对这 6 个再按类型排序，保证展示美观（角色在前）
-	sort.Slice(data.Pools, func(i, j int) bool {
-		if data.Pools[i].Type != data.Pools[j].Type {
-			return data.Pools[i].Type == "char"
-		}
-		// 同类型按时间倒序（最新的在前）
-		return data.Pools[i].LastTimeMs > data.Pools[j].LastTimeMs
-	})
 
 	return data
 }
 
-func sortSixStarsDesc(list []SixStarDetail) {
-	sort.Slice(list, func(i, j int) bool {
-		// 时间字符串降序比较
-		return list[i].TimeStr > list[j].TimeStr
+func buildGachaTypeSection(typeKey, typeLabel string, records []skland.GachaRecord) GachaTypeSection {
+	basePools, limitedPools, recentPulls := buildPoolAnalyses(records)
+
+	return GachaTypeSection{
+		TypeKey:            typeKey,
+		TypeLabel:          typeLabel,
+		Stats:              calculateStats(records),
+		LimitedCurrentPity: calculateLimitedCurrentPity(records),
+		RecentPulls:        recentPulls,
+		BasePools:          basePools,
+		LimitedPools:       limitedPools,
+	}
+}
+
+func filterRecordsByType(allRecords []skland.GachaRecord, poolType string) []skland.GachaRecord {
+	var result []skland.GachaRecord
+	for _, record := range allRecords {
+		if record.PoolType == poolType {
+			result = append(result, record)
+		}
+	}
+	return result
+}
+
+func buildPoolAnalyses(records []skland.GachaRecord) ([]PoolAnalysis, []PoolAnalysis, []SixStarDetail) {
+	grouped := make(map[string][]skland.GachaRecord)
+	infoMap := make(map[string]skland.GachaRecord)
+
+	for _, record := range records {
+		grouped[record.PoolId] = append(grouped[record.PoolId], record)
+		if _, ok := infoMap[record.PoolId]; !ok {
+			infoMap[record.PoolId] = record
+		}
+	}
+
+	var basePools []PoolAnalysis
+	var limitedPools []PoolAnalysis
+	var allSixStars []SixStarDetail
+
+	for poolID, poolRecords := range grouped {
+		sortRecordsAsc(poolRecords)
+
+		info := infoMap[poolID]
+		category := classifyPoolCategory(info)
+		analysis := PoolAnalysis{
+			Name:          info.PoolName,
+			Type:          info.PoolType,
+			Category:      category,
+			CategoryLabel: categoryLabel(category),
+			Total:         len(poolRecords),
+		}
+
+		if len(poolRecords) > 0 {
+			analysis.FirstTimeMs = poolRecords[0].Ts
+			analysis.LastTimeMs = poolRecords[len(poolRecords)-1].Ts
+			analysis.FirstSeqId = poolRecords[0].SeqId
+			analysis.LastSeqId = poolRecords[len(poolRecords)-1].SeqId
+		}
+
+		pity := 0
+		var sixStars []SixStarDetail
+		for index, record := range poolRecords {
+			pity++
+			if record.Rarity != 6 {
+				continue
+			}
+
+			detail := SixStarDetail{
+				PoolName:  info.PoolName,
+				ItemName:  record.ItemName,
+				TimeStr:   formatGachaTime(record.Ts),
+				Rarity:    6,
+				Pity:      pity,
+				GlobalIdx: index + 1,
+				Ts:        record.Ts,
+				SeqId:     record.SeqId,
+			}
+			sixStars = append(sixStars, detail)
+			allSixStars = append(allSixStars, detail)
+			pity = 0
+		}
+
+		analysis.CurrentPity = pity
+		if analysis.Total > 0 {
+			analysis.SixStarRate = float64(len(sixStars)) / float64(analysis.Total) * 100
+		}
+
+		if len(sixStars) > 5 {
+			analysis.RecentSixStars = reverseSixStars(sixStars[len(sixStars)-5:])
+		} else {
+			analysis.RecentSixStars = reverseSixStars(sixStars)
+		}
+
+		if category == poolCategoryLimited {
+			limitedPools = append(limitedPools, analysis)
+		} else {
+			basePools = append(basePools, analysis)
+		}
+	}
+
+	sortPoolAnalyses(basePools)
+	sortPoolAnalyses(limitedPools)
+	sortSixStarsDesc(allSixStars)
+
+	if len(allSixStars) > 20 {
+		allSixStars = allSixStars[:20]
+	}
+
+	return basePools, limitedPools, allSixStars
+}
+
+func sortPoolAnalyses(pools []PoolAnalysis) {
+	sort.Slice(pools, func(i, j int) bool {
+		if pools[i].LastTimeMs != pools[j].LastTimeMs {
+			return pools[i].LastTimeMs > pools[j].LastTimeMs
+		}
+		seqCmp := compareSeqID(pools[i].LastSeqId, pools[j].LastSeqId)
+		if seqCmp != 0 {
+			return seqCmp > 0
+		}
+		if pools[i].FirstTimeMs != pools[j].FirstTimeMs {
+			return pools[i].FirstTimeMs > pools[j].FirstTimeMs
+		}
+		if pools[i].FirstSeqId != pools[j].FirstSeqId {
+			return compareSeqID(pools[i].FirstSeqId, pools[j].FirstSeqId) > 0
+		}
+		if pools[i].Name == pools[j].Name {
+			return pools[i].Type < pools[j].Type
+		}
+		return pools[i].Name < pools[j].Name
 	})
 }
 
-// 辅助函数：计算一组记录的统计摘要
-func calculateStats(records []skland.GachaRecord) StatsSummary {
-	// 确保按时间/SeqId 排序
-	sort.Slice(records, func(i, j int) bool {
-		return records[i].SeqId < records[j].SeqId
-	})
+func reverseSixStars(items []SixStarDetail) []SixStarDetail {
+	result := make([]SixStarDetail, len(items))
+	copy(result, items)
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+		result[i], result[j] = result[j], result[i]
+	}
+	return result
+}
 
+func sortSixStarsDesc(list []SixStarDetail) {
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Ts != list[j].Ts {
+			return list[i].Ts > list[j].Ts
+		}
+		seqCmp := compareSeqID(list[i].SeqId, list[j].SeqId)
+		if seqCmp != 0 {
+			return seqCmp > 0
+		}
+		return list[i].ItemName < list[j].ItemName
+	})
+}
+
+func calculateStats(records []skland.GachaRecord) StatsSummary {
 	stats := StatsSummary{
 		TotalCount: len(records),
 	}
 
-	groupedByPool := make(map[string][]skland.GachaRecord)
-	for _, r := range records {
-		groupedByPool[r.PoolId] = append(groupedByPool[r.PoolId], r)
+	grouped := make(map[string][]skland.GachaRecord)
+	for _, record := range records {
+		key := effectivePityKey(record)
+		grouped[key] = append(grouped[key], record)
 	}
 
 	totalPitySum := 0
-
-	for _, poolRecords := range groupedByPool {
-		// 确保池内有序
-		sort.Slice(poolRecords, func(i, j int) bool {
-			return poolRecords[i].SeqId < poolRecords[j].SeqId
-		})
-
+	for _, group := range grouped {
+		sortRecordsAsc(group)
 		pity := 0
-		for _, r := range poolRecords {
+		for _, record := range group {
 			pity++
-			if r.Rarity == 6 {
-				stats.SixStarCount++
-				totalPitySum += pity
-				pity = 0
+			if record.Rarity != 6 {
+				continue
 			}
+			stats.SixStarCount++
+			totalPitySum += pity
+			pity = 0
 		}
 	}
 
@@ -269,4 +301,99 @@ func calculateStats(records []skland.GachaRecord) StatsSummary {
 	}
 
 	return stats
+}
+
+func calculateLimitedCurrentPity(records []skland.GachaRecord) int {
+	var limitedRecords []skland.GachaRecord
+	for _, record := range records {
+		if classifyPoolCategory(record) == poolCategoryLimited {
+			limitedRecords = append(limitedRecords, record)
+		}
+	}
+
+	sortRecordsAsc(limitedRecords)
+
+	pity := 0
+	for _, record := range limitedRecords {
+		pity++
+		if record.Rarity == 6 {
+			pity = 0
+		}
+	}
+
+	return pity
+}
+
+func effectivePityKey(record skland.GachaRecord) string {
+	if classifyPoolCategory(record) == poolCategoryLimited {
+		return record.PoolType + ":" + poolCategoryLimited
+	}
+	return record.PoolType + ":" + record.PoolId
+}
+
+func classifyPoolCategory(record skland.GachaRecord) string {
+	poolID := strings.ToLower(record.PoolId)
+
+	switch record.PoolType {
+	case "char":
+		if strings.HasPrefix(poolID, "special") {
+			return poolCategoryLimited
+		}
+		return poolCategoryBase
+	case "weapon":
+		if strings.Contains(poolID, "weponbox") {
+			return poolCategoryLimited
+		}
+		return poolCategoryBase
+	default:
+		return poolCategoryBase
+	}
+}
+
+func categoryLabel(category string) string {
+	if category == poolCategoryLimited {
+		return "限定池"
+	}
+	return "基础池"
+}
+
+func sortRecordsAsc(records []skland.GachaRecord) {
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].Ts != records[j].Ts {
+			return records[i].Ts < records[j].Ts
+		}
+		seqCmp := compareSeqID(records[i].SeqId, records[j].SeqId)
+		if seqCmp != 0 {
+			return seqCmp < 0
+		}
+		return records[i].ItemName < records[j].ItemName
+	})
+}
+
+func formatGachaTime(ts int64) string {
+	return time.Unix(ts/1000, 0).Format("2006-01-02 15:04")
+}
+
+func compareSeqID(left, right string) int {
+	leftSeq, leftErr := strconv.ParseInt(left, 10, 64)
+	rightSeq, rightErr := strconv.ParseInt(right, 10, 64)
+	if leftErr == nil && rightErr == nil {
+		switch {
+		case leftSeq < rightSeq:
+			return -1
+		case leftSeq > rightSeq:
+			return 1
+		default:
+			return 0
+		}
+	}
+
+	switch {
+	case left < right:
+		return -1
+	case left > right:
+		return 1
+	default:
+		return 0
+	}
 }
