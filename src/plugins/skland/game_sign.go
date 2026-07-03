@@ -67,7 +67,8 @@ func iSignGame(roleId string, skland AccountSkland, serverName string) (*SignGam
 	if serverName != "Asia" {
 		serverId = "3"
 	}
-	req := SKR().SetHeader("sk-language", "zh_Hans").SetHeader("sk-game-role", "3_"+roleId+"_"+serverId)
+	req := SKR().SetHeader("sk-language", "zh_Hans").SetHeader("sk-game-role", "3_"+roleId+"_"+serverId).
+		SetHeader("Origin", "https://game.skport.com").SetHeader("Referer", "https://game.skport.com/")
 	return SkportRequest[*SignGameData](req, "POST", "/web/v1/game/endfield/attendance", skland)
 }
 

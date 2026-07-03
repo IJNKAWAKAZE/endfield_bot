@@ -26,7 +26,7 @@ func SetTokenHandle(update tgbotapi.Update) error {
 	var buttons [][]tgbotapi.InlineKeyboardButton
 	buttons = append(buttons, tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("国服", fmt.Sprintf("%s,%s,%s", "chooseServer", "国服", "resetToken")),
-		tgbotapi.NewInlineKeyboardButtonData("国际服", fmt.Sprintf("%s,%s, %s", "chooseServer", "国际服", "resetToken")),
+		tgbotapi.NewInlineKeyboardButtonData("国际服", fmt.Sprintf("%s,%s,%s", "chooseServer", "国际服", "resetToken")),
 	))
 	inlineKeyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
 		buttons...,
