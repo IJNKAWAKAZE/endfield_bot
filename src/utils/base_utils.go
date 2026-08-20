@@ -7,7 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	tgbotapi "github.com/ijnkawakaze/telegram-bot-api"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/playwright-community/playwright-go"
+	"github.com/mxschmitt/playwright-go"
 	"gorm.io/gorm"
 	"io"
 	"log"
@@ -256,37 +256,100 @@ func Screenshot(url string, waitTime float64, scale float64) ([]byte, error) {
 		pw, err := playwright.Run()
 		if err != nil {
 			log.Println("未检测到playwright，开始自动安装...")
-			playwright.Install()
-			pw, _ = playwright.Run()
+			if installErr := playwright.Install(&playwright.RunOptions{Browsers: []string{"chromium"}}); installErr != nil {
+				return nil, fmt.Errorf("playwright安装失败: %w", installErr)
+			}
+			pw, err = playwright.Run()
+			if err != nil {
+				return nil, fmt.Errorf("playwright启动失败: %w", err)
+			}
 		}
 		browser, err = pw.Chromium.Launch()
 		if err != nil {
 			log.Println(err)
-			return nil, fmt.Errorf("playerwright启动失败")
+			return nil, fmt.Errorf("playwright启动失败: %w", err)
 		}
 	}
-	page, _ := browser.NewPage(playwright.BrowserNewContextOptions{DeviceScaleFactor: &scale})
+	page, err := browser.NewPage(playwright.BrowserNewPageOptions{DeviceScaleFactor: &scale})
+	if err != nil {
+		return nil, fmt.Errorf("创建页面失败: %w", err)
+	}
 	defer func() {
 		log.Println("关闭playwright")
 		page.Close()
 	}()
 	log.Println("开始进行截图...")
-	page.Goto(url, playwright.PageGotoOptions{
-		WaitUntil: playwright.WaitUntilStateNetworkidle,
+	resp, err := page.Goto(url, playwright.PageGotoOptions{
+		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("页面加载失败: %w", err)
+	}
+	if resp != nil && resp.Status() >= 400 {
+		return nil, fmt.Errorf("页面加载失败，状态码：%d", resp.Status())
+	}
 	if len(WebC) > 0 {
 		e := <-WebC
 		return nil, e
 	}
+	// 只等待截图需要的字体和图片，避免无关的持续请求阻塞截图。
+	if _, err := page.WaitForFunction(`async () => {
+    const fallback = new URL("/assets/state/default_char.png", window.location.href).href;
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const waitForImage = (image) => {
+        if (image.complete) return Promise.resolve();
+        return new Promise(resolve => {
+            const done = () => {
+                image.removeEventListener("load", done);
+                image.removeEventListener("error", done);
+                resolve();
+            };
+            image.addEventListener("load", done, { once: true });
+            image.addEventListener("error", done, { once: true });
+            if (image.complete) done();
+        });
+    };
+    const images = Array.from(document.images);
+    const resources = (async () => {
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        await Promise.all(images.map(waitForImage));
+        return false;
+    })();
+    const timedOut = await Promise.race([resources, delay(8000).then(() => true)]);
+    const failedImages = images.filter(image => !image.complete || image.naturalWidth === 0);
+
+    if (timedOut || failedImages.length > 0) {
+        failedImages.forEach(image => {
+            if (image.src !== fallback) {
+                image.onerror = null;
+                image.src = fallback;
+            }
+        });
+        await Promise.all(failedImages.map(waitForImage));
+    }
+
+    await Promise.all(images.map(async image => {
+        if (image.complete && image.naturalWidth > 0 && image.decode) {
+            try {
+                await image.decode();
+            } catch (_) {
+                // The image has settled; the fallback above handles failed loads.
+            }
+        }
+    }));
+    return true;
+}`, nil, playwright.PageWaitForFunctionOptions{Timeout: playwright.Float(12000)}); err != nil {
+		log.Println("等待图片和字体加载超时，继续截图:", err)
+	}
 	page.WaitForTimeout(waitTime)
-	locator, _ := page.Locator("#main")
-	if v, _ := locator.IsVisible(); !v {
+	locator := page.Locator("#main")
+	if v, err := locator.IsVisible(); err != nil || !v {
 		log.Println("元素未加载取消截图操作")
 		return nil, fmt.Errorf("元素未加载")
 	}
 	screenshot, err := locator.Screenshot(playwright.LocatorScreenshotOptions{Type: playwright.ScreenshotTypeJpeg})
 	if err != nil {
-		return nil, fmt.Errorf("截图失败")
+		return nil, fmt.Errorf("截图失败: %w", err)
 	}
 	log.Println("截图完成...")
 	return screenshot, nil
